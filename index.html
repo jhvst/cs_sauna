@@ -15,7 +15,7 @@
             width: 100%;
         }
     </style>
-</head>  
+</head>
 <body>
     <nav>
         <p>cs_sauna is twitch but with better bitrate</p>
@@ -44,37 +44,28 @@
         document.body.appendChild(f)
     }
 
-  const addStream = async (e) => {
-      const streamer = new FormData(e.target).get("streamer")
-      const shim = Hls.isSupported()
-      const video = document.createElement("video")
-      const modern = video.canPlayType('application/vnd.apple.mpegurl')
-      const support = shim || modern;
-      if (!support) {
-          alert("No HLS support. Try Microsoft Edge or Chrome Canary.")
-          return
-      }
+    const addStream = async (e) => {
+        const streamer = new FormData(e.target).get("streamer")
+        const video = document.createElement("video")
+        const modern = video.canPlayType('application/vnd.apple.mpegurl')
+        const support = Hls.isSupported() || modern;
+        if (!support) {
+            alert("No HLS support. Try Microsoft Edge or Chrome Canary.")
+            return
+        }
 
-      if (modern) {
-        video.src = 'http://hel1.ponkila.com:8000/' + streamer + '.m3u8';
-        video.addEventListener('loadedmetadata',function() {
-            video.play();
-        });
-        console.log("modern browser with native support")
-        createVideo(streamer, video)
-        return
-      }
+        if (modern) {
+            console.log("modern browser with native support")
+            video.src = streamer + '.m3u8';
+            video.addEventListener('loadedmetadata', video.play);
+        } else {
+            console.log("shim supported browser")
+            const hls = new Hls();
+            hls.loadSource(streamer + '.m3u8');
+            hls.attachMedia(video);
+            hls.on(Hls.Events.MANIFEST_PARSED, video.play);
+        }
 
-      if (shim) {
-        const hls = new Hls();
-        hls.loadSource('http://hel1.ponkila.com:8000/' + streamer + '.m3u8');
-        hls.attachMedia(video);
-        hls.on(Hls.Events.MANIFEST_PARSED, function() {
-            video.play();
-        });
-        console.log("shim supported browser")
         createVideo(streamer, video)
-        return
-      }
-  }
+    }
 </script>
