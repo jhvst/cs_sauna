@@ -26,10 +26,25 @@
                 <button type="submit">Add</button>
             </fieldset>
         </form>
+        <form onsubmit="syncStreams(event); return false">
+            <fieldset>
+                <legend>Group control</legend>
+                <input name="time" type="number" required />
+                <button type="submit" >Sync all videos</button>
+            </fieldset>
+        </form>
     </nav>
 </body>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/hls.js/0.14.17/hls.min.js" integrity="sha512-t0GMHzxvVdMw1p8oSntdvFKikEx9Pwus6G2PP3U7/GQ3+Id+D9sYgnck0etYk0CBK5gdk8BJBnQYx7PIT1PJ0Q==" crossorigin="anonymous"></script>
 <script>
+
+    const syncStreams = async (e) => {
+        const time = new FormData(e.target).get("time")
+        const videos = document.querySelectorAll("video");
+        for (const video of videos) {
+            video.currentTime = time;
+        }
+    }
 
     const createVideo = async (name, video) => {
         const f = document.createElement("form");
