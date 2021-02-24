@@ -14,6 +14,10 @@
         video {
             width: 100%;
         }
+
+        .hidden {
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -46,17 +50,65 @@
         }
     }
 
-    const createVideo = async (name, video) => {
+    const createVideo = (name, video, v) => {
         const f = document.createElement("form");
         const fs = document.createElement("fieldset");
         const l = document.createElement("legend");
         l.innerText = name;
 
+        video.onseeking = (event) => {
+            const siblings = event.target.parentNode.querySelectorAll("video.hidden")
+            for (const sibling of siblings) {
+                sibling.currentTime = event.target.currentTime
+            }
+        } 
+
         f.appendChild(fs)
         fs.appendChild(l)
         fs.appendChild(video)
+        fs.appendChild(v)
 
-        document.body.appendChild(f)
+        return fs
+    }
+
+    const changeVolume = (event) => {
+        event.target.parentNode.parentNode.querySelector("video[data-track='" + event.target.dataset.track + "']").volume = event.target.value
+    }
+
+    const createControls = async (container, videos) => {
+        videos.forEach((val, t) => {
+            const volume_label = document.createElement("label");
+            volume_label.innerText = val.dataset.track
+            const volume = document.createElement("input");
+            volume.onchange = changeVolume
+            volume.type = "range"
+            volume.min = "0"
+            volume.max = "1"
+            volume.step = "0.01"
+            volume.dataset.track = val.dataset.track
+            volume_label.appendChild(volume)
+            container.appendChild(volume_label)
+        })
+        const play = document.createElement("button");
+        play.innerText = "Play"
+        play.onclick = (e) => {
+            e.preventDefault()
+            const videos = play.parentNode.querySelectorAll("video")
+            for (const video of videos) {
+                video.play();
+            }
+        }
+        container.appendChild(play)
+
+        const safari = document.createElement("button");
+        safari.innerText = "Delegate tracks (Safari only)"
+        safari.onclick = () => {
+            document.querySelectorAll("video").forEach((val, t) => {
+                val.audioTracks[t].enabled = true
+                val.play()
+            });
+        }
+        container.appendChild(safari)
     }
 
     const addStream = async (e) => {
@@ -69,18 +121,42 @@
             return
         }
 
+        video.dataset.track = "system sound"
+
+        const v = document.createElement("video")
+        v.classList.add("hidden")
+        v.dataset.track = "microphone"
+
         if (modern) {
             console.log("modern browser with native support")
             video.src = streamer + '.m3u8';
             video.addEventListener('loadedmetadata', video.play);
+
+            v.src = streamer + '.m3u8';
+            v.addEventListener('loadedmetadata', v.play);
         } else {
             console.log("shim supported browser")
             const hls = new Hls();
             hls.loadSource(streamer + '.m3u8');
             hls.attachMedia(video);
-            hls.on(Hls.Events.MANIFEST_PARSED, video.play);
+            hls.on(Hls.Events.MANIFEST_PARSED, (event, data) => {
+                console.log(event, data);
+                video.play()
+            });
+
+            const hls2 = new Hls();
+            hls2.loadSource(streamer + '.m3u8');
+            hls2.attachMedia(v);
+            hls2.on(Hls.Events.MANIFEST_PARSED, (event, data) => {
+                console.log(event, data);
+                hls2.audioTrack = 1
+                v.play()
+            });
+            
         }
 
-        createVideo(streamer, video)
+        const f = createVideo(streamer, video, v)
+        document.body.appendChild(f)
+        createControls(f, [video, v])
     }
 </script>
