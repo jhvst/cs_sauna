@@ -127,19 +127,10 @@
         const video = document.createElement("video")
         video.dataset.track = "system sound"
 
-        const v = document.createElement("video")
-        v.classList.add("hidden")
-        v.dataset.track = "microphone"        
-
         video.src = streamer + '.m3u8';
         video.addEventListener('loadedmetadata', video.play);
 
-        v.src = streamer + '.m3u8';
-        v.addEventListener('loadedmetadata', v.play);
-
-        const f = createVideo(streamer, video, v)
-        document.body.appendChild(f)
-        createControls(f, [video, v])
+        document.body.appendChild(video)
     }
 
     const addStream = e => {
